@@ -6,11 +6,14 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-
+    event.preventDefault();
+    setIsLoading(true);
+    setError("");
   
 
   const response = await fetch("http://localhost:8000/auth/login", {
@@ -24,11 +27,19 @@ export default function LoginPage() {
  
 
   const data = await response.json();
+  if (!response.ok) {
+  setError(data.message || "Erreur lors de la connexion");
+  setIsLoading(false);
+  return;
+}
+
   const token = data.data.token;
   const user = data.data.user;
 
   sessionStorage.setItem("token", token);
 sessionStorage.setItem("user", JSON.stringify(user));
+
+setIsLoading(false);
 
 router.push("/dashboard");
   
@@ -56,7 +67,11 @@ router.push("/dashboard");
           onChange={(event) => setPassword(event.target.value)}
         />
 
-        <button type="submit">Se connecter</button>
+        {error && <p>{error}</p>}
+
+        <button type="submit" disabled={isLoading}>
+        {isLoading ? "Connexion..." : "Se connecter"}
+        </button>
       </form>
     </main>
   );

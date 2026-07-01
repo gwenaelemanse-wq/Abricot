@@ -77,6 +77,8 @@ export default function SignInPage() {
                     {isLoading ? "Inscription..." : "S'inscrire"}
                 </button>
             </form>
+
+            <a href="/login">Vous avez déjà un compte ? Connectez-vous</a>
         </main>
     );
 }

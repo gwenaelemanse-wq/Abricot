@@ -73,6 +73,8 @@ router.push("/dashboard");
         {isLoading ? "Connexion..." : "Se connecter"}
         </button>
       </form>
+
+      <a href="/signin">Pas encore de compte ? Inscrivez-vous</a>
     </main>
   );
 }

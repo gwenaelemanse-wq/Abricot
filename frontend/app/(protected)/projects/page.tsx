@@ -9,6 +9,16 @@ type Project = {
   name: string;
   description: string | null;
   createdAt: string;
+  ownerId: string;
+  members: {
+    id: string;
+    role: "OWNER" | "ADMIN" | "CONTRIBUTOR";
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  }[];
 };
 
 export default function ProjectsPage() {

@@ -2,11 +2,23 @@
 
 import { useState } from "react";
 
+type Member = {
+  id: string;
+  role: "OWNER" | "ADMIN" | "CONTRIBUTOR";
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+};
+
 type Project = {
   id: string;
   name: string;
   description: string | null;
   createdAt: string;
+  ownerId: string;
+  members: Member[];
 };
 
 type CreateProjectModalProps = {

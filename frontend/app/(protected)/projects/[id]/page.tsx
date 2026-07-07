@@ -2,62 +2,61 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import TaskCard from "@/components/TaskCard";
 
-  type Task = {
+type Project = {
   id: string;
-  title: string;
+  name: string;
   description: string | null;
-  status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
-  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  dueDate: string | null;
 };
 
-
-export default function ProjectDetailPage() {
+export default function ProjectDetailsPage() {
   const params = useParams();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const projectId = params.id as string;
+
+  const [project, setProject] = useState<Project | null>(null);
 
   useEffect(() => {
-  const fetchTasks = async () => {
-    const token = sessionStorage.getItem("token");
+    const fetchProject = async () => {
+      const token = sessionStorage.getItem("token");
 
-    const response = await fetch(
-      `http://localhost:8000/projects/${params.id}/tasks`,
-      {
+      const response = await fetch(`http://localhost:8000/projects/${projectId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    const data = await response.json();
+      const data = await response.json();
+      setProject(data.data.project);
+    };
 
-    console.log(data);
+    fetchProject();
+  }, [projectId]);
 
-    setTasks(data.data.tasks);
-  };
-
-  fetchTasks();
-}, [params.id]);
-
-
-
-  console.log(params);
+  if (!project) {
+    return <p>Chargement du projet...</p>;
+  }
 
   return (
-  <main>
-    <h1>Projet</h1>
+    <main>
+      <section className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">{project.name}</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            {project.description}
+          </p>
+        </div>
 
-    {tasks.length === 0 ? (
-      <p>Aucune tâche.</p>
-    ) : (
-      tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
-      ))
-    )}
-  </main>
-  )
+        <button className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white">
+          Créer une tâche
+        </button>
+      </section>
 
+      <section className="mt-8 rounded-xl bg-white p-8 shadow-sm">
+        <h2 className="text-lg font-medium">Tâches</h2>
+        <p className="mt-2 text-sm text-gray-500">
+          Ici on affichera les tâches du projet.
+        </p>
+      </section>
+    </main>
+  );
 }
-

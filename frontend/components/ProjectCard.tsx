@@ -1,7 +1,4 @@
-import { useState } from "react";
-import EditProjectModal from "@/components/EditModalProject";
 import Link from "next/link";
-
 
 
 type Member = {
@@ -9,7 +6,7 @@ type Member = {
   role: "OWNER" | "ADMIN" | "CONTRIBUTOR";
   user: {
     id: string;
-    name: string;
+    name: string | null;
     email: string;
   };
 };
@@ -19,69 +16,72 @@ type Project = {
   name: string;
   description: string | null;
   createdAt: string;
-  members: Member[];
   ownerId: string;
+  members: Member[];
+  _count?: {
+    tasks: number;
+  };
+  userRole?: "OWNER" | "ADMIN" | "CONTRIBUTOR";
 };
 
 type ProjectCardProps = {
   project: Project;
-  onDelete: (projectId: string) => void;
-  onProjectUpdated: (updatedProject: Project) => void;
 };
 
-
-
-
-export default function ProjectCard({ project, onDelete, onProjectUpdated }: ProjectCardProps) {
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
-
-  const currentMember = project.members.find(
-  (member) => member.user.id === currentUser.id
-  );
-
-  const role = currentMember?.role;
-
-  const isOwner = project.ownerId === currentUser.id;
-const canEdit = isOwner || role === "OWNER" || role === "ADMIN";
-const canDelete = isOwner || role === "OWNER";
-
-  console.log("Utilisateur connecté :", currentUser);
-console.log("Membres du projet :", project.members);
-console.log("Membre trouvé :", currentMember);
-console.log("Rôle :", role);
+export default function ProjectCard({ project }: ProjectCardProps) {
+  const members = project.members ?? [];
+  const taskCount = project._count?.tasks ?? 0;
 
   return (
-    <article>
-      <h2>{project.name}</h2>
-      <p>{project.description || "Aucune description"}</p>
-      {canEdit && (
-  <button type="button" onClick={() => setIsEditOpen(true)}>
-    Modifier
-  </button>
-)}
-
-{canDelete && (
-  <button type="button" onClick={() => onDelete(project.id)}>
-    Supprimer
-  </button>
-)}
-
-      {isEditOpen && (
-      <EditProjectModal
-       project={project}
-      onProjectUpdated={(updatedProject) => {
-      onProjectUpdated(updatedProject);
-      setIsEditOpen(false);
-      }}
-      />
-    )}
-
-      <Link href={`/projects/${project.id}`}>
-      Voir le projet
-      </Link>
-
+    <Link href={`/projects/${project.id}`}>
+    <article className="w-80 cursor-pointer rounded-lg bg-white p-7 shadow-sm transition hover:shadow-md">
     
+      <h3 className="text-lg font-semibold text-neutral-900">
+        {project.name}
+      </h3>
+
+      <p className="mt-2 min-h-10 text-sm text-gray-500">
+        {project.description || "Aucune description"}
+      </p>
+
+      <div className="mt-8 flex items-center justify-between text-xs text-gray-500">
+        <span>Progression</span>
+        <span>0%</span>
+      </div>
+
+      <div className="mt-2 h-2 rounded-full bg-gray-200">
+        <div className="h-2 w-0 rounded-full bg-orange-500" />
+      </div>
+
+      <p className="mt-2 text-xs text-gray-500">
+        0/{taskCount} tâches terminées
+      </p>
+
+      <div className="mt-8 flex items-center gap-2">
+        <span className="text-xs text-gray-500">
+          Équipe ({members.length})
+        </span>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-xs text-orange-700">
+          AD
+        </span>
+
+        <span className="rounded-full bg-orange-100 px-3 py-1 text-xs text-orange-700">
+          Propriétaire
+        </span>
+
+        {members.slice(0, 2).map((member) => (
+          <span
+            key={member.user.id}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs text-gray-600"
+          >
+            {(member.user.name || member.user.email).slice(0, 2).toUpperCase()}
+          </span>
+        ))}
+      </div>
     </article>
+    </Link>
   );
 }

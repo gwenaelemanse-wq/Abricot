@@ -12,6 +12,7 @@ type Task = {
   status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate: string | null;
+  projectId: string;
 };
 
 type Project = {
@@ -36,6 +37,7 @@ const [taskPriority, setTaskPriority] = useState<
 >("MEDIUM");
 const [taskDueDate, setTaskDueDate] = useState("");
 const [taskError, setTaskError] = useState("");
+const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -47,16 +49,31 @@ const [taskError, setTaskError] = useState("");
         },
       });
 
+      const tasksResponse = await fetch(
+  `http://localhost:8000/projects/${projectId}/tasks`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
+const tasksData = await tasksResponse.json();
+setTasks(tasksData.data.tasks);
+
       const data = await response.json();
       setProject(data.data.project);
     };
 
     fetchProject();
+
   }, [projectId]);
 
   if (!project) {
     return <p>Chargement du projet...</p>;
   }
+
+
   const handleCreateTask = async (event: React.FormEvent) => {
   event.preventDefault();
 
@@ -83,25 +100,25 @@ const [taskError, setTaskError] = useState("");
   const data = await response.json();
 
   if (!response.ok) {
-    setTaskError(data.message || "Erreur lors de la création de la tâche");
-    return;
-  }
+  setTaskError(data.message || "Erreur lors de la création de la tâche");
+  return;
+}
 
-  setProject((previousProject) => {
-    if (!previousProject) return previousProject;
+setProject((previousProject) => {
+  if (!previousProject) return previousProject;
 
-    return {
-      ...previousProject,
-      tasks: [data.data.task, ...previousProject.tasks],
-    };
-  });
+  return {
+    ...previousProject,
+    tasks: [data.data.task, ...previousProject.tasks],
+  };
+});
 
-  setTaskTitle("");
-  setTaskDescription("");
-  setTaskPriority("MEDIUM");
-  setTaskDueDate("");
-  setTaskError("");
-  setIsCreateTaskModalOpen(false);
+setTaskTitle("");
+setTaskDescription("");
+setTaskPriority("MEDIUM");
+setTaskDueDate("");
+setTaskError("");
+setIsCreateTaskModalOpen(false);
 };
 
   return (
@@ -137,12 +154,12 @@ const [taskError, setTaskError] = useState("");
   </div>
 
   <div className="space-y-4">
-    {project.tasks.length === 0 ? (
+    {tasks.length === 0 ? (
       <p className="text-sm text-gray-500">Aucune tâche pour ce projet.</p>
     ) : (
-      project.tasks.map((task) => (
-        <ProjectTaskCard key={task.id} task={task} variant="List" />
-      ))
+      tasks.map((task) => (
+  <ProjectTaskCard key={task.id} task={task} variant="List" />
+))
     )}
   </div>
 </section>

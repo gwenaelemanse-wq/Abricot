@@ -165,7 +165,7 @@ const handleCreateProject = async (event: React.FormEvent) => {
       </h3>
 
       {todoTasks.map((task) => (
-        <TaskCard key={task.id} task={task} variant="kanban" />
+        <TaskCard key={task.id} task={task} variant="Kanban" />
       ))}
     </div>
 
@@ -175,7 +175,7 @@ const handleCreateProject = async (event: React.FormEvent) => {
       </h3>
 
       {inProgressTasks.map((task) => (
-        <TaskCard key={task.id} task={task} variant="kanban" />
+        <TaskCard key={task.id} task={task} variant="Kanban" />
       ))}
     </div>
 
@@ -185,7 +185,7 @@ const handleCreateProject = async (event: React.FormEvent) => {
       </h3>
 
       {doneTasks.map((task) => (
-        <TaskCard key={task.id} task={task} variant="kanban" />
+        <TaskCard key={task.id} task={task} variant="Kanban" />
       ))}
     </div>
   </section>

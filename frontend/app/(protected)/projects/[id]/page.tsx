@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import TaskCard from "@/components/TaskCard";
+import ProjectTaskCard from "@/components/ProjectTaskCard";
 
 
 type Task = {
@@ -141,7 +141,7 @@ const [taskError, setTaskError] = useState("");
       <p className="text-sm text-gray-500">Aucune tâche pour ce projet.</p>
     ) : (
       project.tasks.map((task) => (
-        <TaskCard key={task.id} task={task} variant="list" />
+        <ProjectTaskCard key={task.id} task={task} variant="List" />
       ))
     )}
   </div>

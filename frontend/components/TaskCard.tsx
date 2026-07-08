@@ -7,15 +7,20 @@ type TaskCardProps = {
     description: string | null;
     status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
     project?: {
+      id: string;
       name: string;
     };
     dueDate: string | null;
     comments?: { id: string }[];
-    variant?: "list" | "kanban";
+    priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  
+    
   };
+
+  variant?: "List" | "Kanban";
 };
 
-export default function TaskCard({ task, variant = "list" }: TaskCardProps) {
+export default function TaskCard({ task, variant = "List" }: TaskCardProps) {
   const badge = {
     TODO: "À faire",
     IN_PROGRESS: "En cours",
@@ -30,10 +35,12 @@ export default function TaskCard({ task, variant = "list" }: TaskCardProps) {
     CANCELLED: "bg-gray-200 text-gray-500",
   };
 
+  
+
   return (
     <article
   className={`rounded-lg border border-gray-200 bg-white p-6 transition hover:shadow-sm ${
-    variant === "list" ? "w-full" : "w-full"
+    variant === "List" ? "w-full" : "w-full"
   }`}
 >
       <div className="flex items-start justify-between">
@@ -52,6 +59,8 @@ export default function TaskCard({ task, variant = "list" }: TaskCardProps) {
         >
           {badge[task.status]}
         </span>
+
+        
       </div>
 
       <div className="mt-6 flex items-center justify-between">
@@ -72,11 +81,11 @@ export default function TaskCard({ task, variant = "list" }: TaskCardProps) {
         </div>
 
         <Link
-          href={`/tasks/${task.id}`}
-          className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
-        >
-          Voir
-        </Link>
+  href={`/projects/${task.project?.id}`}
+  className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
+>
+  Voir
+</Link>
       </div>
     </article>
   );

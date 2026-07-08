@@ -135,6 +135,13 @@ const handleCreateProject = async (event: React.FormEvent) => {
   <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-16">
     <div className="relative w-full max-w-md rounded-lg bg-white px-12 py-10 shadow-sm">
       
+      <button
+        type="button"
+        onClick={() => setIsCreateModalOpen(false)}
+        className="absolute right-6 top-5 text-xl text-gray-400 hover:text-gray-600"
+      >
+        ×
+      </button>
 
 
       

@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#d7d7db] p-8">
       <section className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1360px] overflow-hidden rounded-sm border border-[#2f7fdb] bg-white">
-        <div className="flex w-[39%] flex-col bg-[#e4e4e6] px-14 py-8 text-black">
+        <div className="flex w-[39%] flex-col bg-white px-14 py-8 text-black">
           
 
           <div className="mx-auto mt-3 w-full max-w-[280px]">

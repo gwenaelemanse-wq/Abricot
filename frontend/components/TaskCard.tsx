@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
 type TaskCardProps = {
@@ -13,14 +16,22 @@ type TaskCardProps = {
     dueDate: string | null;
     comments?: { id: string }[];
     priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  
-    
   };
 
   variant?: "List" | "Kanban";
+  canDelete: boolean;
+  onDeleted: (taskId: string) => void;
 };
 
-export default function TaskCard({ task, variant = "List" }: TaskCardProps) {
+export default function TaskCard({
+  task,
+  variant = "List",
+  canDelete,
+  onDeleted,
+}: TaskCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
   const badge = {
     TODO: "À faire",
     IN_PROGRESS: "En cours",
@@ -35,15 +46,63 @@ export default function TaskCard({ task, variant = "List" }: TaskCardProps) {
     CANCELLED: "bg-gray-200 text-gray-500",
   };
 
-  
+  const handleDeleteTask = async () => {
+    const projectId = task.project?.id;
+
+    if (!projectId) {
+      setDeleteError("Impossible de retrouver le projet de cette tâche.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer cette tâche ?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleteError("");
+
+    try {
+      setIsDeleting(true);
+
+      const token = sessionStorage.getItem("token");
+
+      const response = await fetch(
+        `http://localhost:8000/projects/${projectId}/tasks/${task.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDeleteError(
+          data.message || "Erreur lors de la suppression de la tâche."
+        );
+        return;
+      }
+
+      onDeleted(task.id);
+    } catch {
+      setDeleteError("Erreur réseau lors de la suppression de la tâche.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <article
-  className={`rounded-lg border border-gray-200 bg-white p-6 transition hover:shadow-sm ${
-    variant === "List" ? "w-full" : "w-full"
-  }`}
->
-      <div className="flex items-start justify-between">
+      className={`rounded-lg border border-gray-200 bg-white p-6 transition hover:shadow-sm ${
+        variant === "List" ? "w-full" : "w-full"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-neutral-900">
             {task.title}
@@ -55,16 +114,16 @@ export default function TaskCard({ task, variant = "List" }: TaskCardProps) {
         </div>
 
         <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${badgeColor[task.status]}`}
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            badgeColor[task.status]
+          }`}
         >
           {badge[task.status]}
         </span>
-
-        
       </div>
 
-      <div className="mt-6 flex items-center justify-between">
-        <div className="flex items-center gap-5 text-xs text-gray-400">
+      <div className="mt-6 flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-5 text-xs text-gray-400">
           <span>📁 {task.project?.name ?? "Nom du projet"}</span>
 
           <span>
@@ -80,13 +139,34 @@ export default function TaskCard({ task, variant = "List" }: TaskCardProps) {
           <span>💬 {task.comments?.length ?? 0}</span>
         </div>
 
-        <Link
-  href={`/projects/${task.project?.id}`}
-  className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
->
-  Voir
-</Link>
+        <div className="flex items-center gap-3">
+          {task.project?.id && (
+            <Link
+              href={`/projects/${task.project.id}`}
+              className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
+            >
+              Voir
+            </Link>
+          )}
+
+          {canDelete && (
+            <button
+              type="button"
+              onClick={handleDeleteTask}
+              disabled={isDeleting}
+              className="rounded-md bg-red-500 px-7 py-3 text-sm text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </button>
+          )}
+        </div>
       </div>
+
+      {deleteError && (
+        <p className="mt-4 text-sm text-red-500">
+          {deleteError}
+        </p>
+      )}
     </article>
   );
 }

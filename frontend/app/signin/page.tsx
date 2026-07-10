@@ -47,7 +47,7 @@ export default function SignInPage() {
   return (
     <main className="min-h-screen bg-[#d7d7db] p-4 md:p-8">
       <section className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1360px] overflow-hidden rounded-sm border border-[#2f7fdb] bg-white">
-        <div className="flex w-full flex-col bg-[#e4e4e6] px-8 py-6 text-black md:w-[39%] md:px-14 md:py-8">
+        <div className="flex w-full flex-col bg-white px-8 py-6 text-black md:w-[39%] md:px-14 md:py-8">
           <p className="mb-8 text-sm text-[#1275e3]">Sign Up</p>
 
           <div className="mx-auto mt-3 w-full max-w-[280px]">

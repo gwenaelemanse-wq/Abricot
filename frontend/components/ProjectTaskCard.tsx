@@ -50,6 +50,7 @@ type ProjectTaskCardProps = {
   variant?: "List" | "Kanban";
   canDelete: boolean;
   onDeleted: (taskId: string) => void;
+  onUpdated: (updatedTask: ProjectTaskCardProps["task"]) => void;
 };
 
 export default function ProjectTaskCard({
@@ -59,6 +60,7 @@ export default function ProjectTaskCard({
   members,
   canDelete,
   onDeleted,
+  onUpdated,
 }: ProjectTaskCardProps) {
   const [comments, setComments] = useState<Comment[]>(task.comments ?? []);
   const [createComment, setCreateComment] = useState("");
@@ -70,14 +72,14 @@ export default function ProjectTaskCard({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [editTitle, setEditTitle] = useState(task.title);
-const [editDescription, setEditDescription] = useState(task.description ?? "");
-const [editStatus, setEditStatus] = useState(task.status);
-
-const [editDueDate, setEditDueDate] = useState(
-  task.dueDate ? task.dueDate.slice(0, 10) : ""
-);
-const [editAssigneeId, setEditAssigneeId] =  useState<string | null>(null);
-const [editError, setEditError] = useState ("");
+  const [editDescription, setEditDescription] = useState(task.description ?? "");
+  const [editStatus, setEditStatus] = useState(task.status);
+  const [editDueDate, setEditDueDate] = useState(
+    task.dueDate ? task.dueDate.slice(0, 10) : ""
+  );
+  const [editAssigneeId, setEditAssigneeId] =  useState<string | null>(null);
+  const [editError, setEditError] = useState ("");
+  const [isEditing, setIsEditing]= useState(false);
 
   const badge = {
     TODO: "À faire",
@@ -187,6 +189,49 @@ const [editError, setEditError] = useState ("");
       setIsDeleting(false);
     }
   };
+
+  const handleUpdateTask = async (
+  event: FormEvent<HTMLFormElement>
+) => {
+  event.preventDefault();
+  setEditError("");
+
+  try {
+    const token = sessionStorage.getItem("token");
+
+    const response = await fetch(
+      `http://localhost:8000/projects/${task.projectId}/tasks/${task.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          description: editDescription.trim(),
+          status: editStatus,
+          dueDate: editDueDate || null,
+          assigneeIds: editAssigneeId ? [editAssigneeId] : [],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setEditError(
+        data.message || "Erreur lors de la modification de la tâche."
+      );
+      return;
+    }
+
+    onUpdated(data.data.task);
+    setIsEditModalOpen(false);
+  } catch {
+    setEditError("Erreur réseau lors de la modification de la tâche.");
+  }
+};
 
   return (
     <article
@@ -392,7 +437,10 @@ const [editError, setEditError] = useState ("");
         Modifier la tâche
       </h2>
 
-      <form className="mt-6 space-y-5">
+      <form
+        onSubmit={handleUpdateTask}
+        className="mt-6 space-y-5"
+      >
         <div>
           <label
             htmlFor={`edit-title-${task.id}`}

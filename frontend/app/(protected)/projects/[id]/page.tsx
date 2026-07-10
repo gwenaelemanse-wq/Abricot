@@ -232,6 +232,14 @@ const canManageTasks =
   project.userRole === "ADMIN" ||
   project.userRole === "CONTRIBUTOR";
 
+  const handleTaskUpdated = (updatedTask: Task) => {
+  setTasks((previousTasks) =>
+    previousTasks.map((task) =>
+      task.id === updatedTask.id ? updatedTask : task
+    )
+  );
+};
+
 
   
   return (
@@ -289,6 +297,7 @@ const canManageTasks =
                 variant="List"
                 canDelete={canManageTasks}
                 onDeleted={handleTaskDeleted}
+                onUpdated={handleTaskUpdated}
               />
             ))
           )}

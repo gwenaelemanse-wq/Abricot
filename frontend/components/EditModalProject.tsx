@@ -30,7 +30,9 @@ export default function EditProjectModal({ project, onProjectUpdated }: EditProj
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || "");
     const [error, setError] = useState("");
-
+    const [editAssigneeId, setEditAssigneeId] = useState<string | null>(
+    project.members?.[0]?.user.id ?? null
+    );
     const handleUpdateProject = async (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); setError("");
 
         if (!name.trim()) {
@@ -46,7 +48,7 @@ export default function EditProjectModal({ project, onProjectUpdated }: EditProj
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ name, description })
+            body: JSON.stringify({ name, description, editAssigneeId })
         });
 
         const data = await response.json();
@@ -64,6 +66,7 @@ export default function EditProjectModal({ project, onProjectUpdated }: EditProj
         value={name}
         onChange={(event) => {
           setName(event.target.value);
+          setEditAssigneeId(null);
           setError("");
         }}
       />

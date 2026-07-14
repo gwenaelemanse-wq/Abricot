@@ -172,7 +172,17 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <section className="mt-6 rounded-xl bg-white p-10 shadow-sm">
+      
+
+      {error && (
+        <p className="mt-4 text-sm text-red-500">
+          {error}
+        </p>
+      )}
+
+      {view === "list" && (
+        <div className="mt-6 space-y-4">
+          <section className="mt-6 rounded-xl bg-white p-10 shadow-sm">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-medium">Mes tâches assignées</h2>
@@ -190,20 +200,11 @@ export default function DashboardPage() {
           />
         </div>
       </section>
-
-      {error && (
-        <p className="mt-4 text-sm text-red-500">
-          {error}
-        </p>
-      )}
-
-      {view === "list" && (
-        <div className="mt-6 space-y-4">
-          {tasks.length === 0 ? (
+          {tasks.length === 0 ? 
             <p className="text-sm text-gray-500">
               Aucune tâche assignée.
             </p>
-          ) : (
+           : (
             tasks.map((task) => (
               <TaskCard
                 key={task.id}

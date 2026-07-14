@@ -39,7 +39,7 @@ type Task = {
   title: string;
   description: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
-  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  
   dueDate: string | null;
   projectId: string;
   comments?: Comment[];

@@ -22,6 +22,10 @@ type Project = {
     tasks: number;
   };
   userRole?: "OWNER" | "ADMIN" | "CONTRIBUTOR";
+  tasks?: {
+  id: string;
+  status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+}[];
 };
 
 type ProjectCardProps = {
@@ -30,7 +34,20 @@ type ProjectCardProps = {
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const members = project.members ?? [];
-  const taskCount = project._count?.tasks ?? 0;
+const tasks = project.tasks ?? [];
+
+const totalTasks = tasks.length;
+
+const completedTasks = tasks.filter(
+  (task) => task.status === "DONE"
+).length;
+
+const progress =
+  totalTasks === 0
+    ? 0
+    : Math.round((completedTasks / totalTasks) * 100);
+
+    console.log(project.name, project.tasks);
 
   return (
     <Link href={`/projects/${project.id}`}>
@@ -43,19 +60,28 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       <p className="mt-2 min-h-10 text-sm text-gray-500">
         {project.description || "Aucune description"}
       </p>
+<div className="mt-8">
+  <div className="mb-2 flex items-center justify-between">
+    <span className="text-sm text-gray-500">
+      Progression
+    </span>
 
-      <div className="mt-8 flex items-center justify-between text-xs text-gray-500">
-        <span>Progression</span>
-        <span>0%</span>
-      </div>
+    <span className="text-sm font-medium text-neutral-900">
+      {progress}%
+    </span>
+  </div>
 
-      <div className="mt-2 h-2 rounded-full bg-gray-200">
-        <div className="h-2 w-0 rounded-full bg-orange-500" />
-      </div>
+  <div className="h-2 w-full rounded-full bg-gray-200">
+    <div
+      className="h-2 rounded-full bg-orange-500 transition-all"
+      style={{ width: `${progress}%` }}
+    />
+  </div>
 
-      <p className="mt-2 text-xs text-gray-500">
-        0/{taskCount} tâches terminées
-      </p>
+  <p className="mt-2 text-xs text-gray-500">
+    {completedTasks}/{totalTasks} tâches terminées
+  </p>
+</div>
 
       <div className="mt-8 flex items-center gap-2">
         <span className="text-xs text-gray-500">

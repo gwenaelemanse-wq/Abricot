@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ProtectedLayout({
   children,
@@ -36,9 +37,7 @@ export function ProtectedHeader() {
   return (
     <header className="mx-4 mt-4 bg-white">
       <nav className="flex h-20 items-center justify-between px-20">
-        <Link href="/dashboard" className="text-2xl font-bold text-orange-600">
-          ABRICOT
-        </Link>
+        <img src="/images/Color=orange.png" alt="LogoOrange" className="h-12 w-auto" />
 
         <div className="flex items-center gap-24 text-orange-600">
           <Link href="/dashboard">▦ Tableau de bord</Link>
@@ -60,7 +59,7 @@ export function ProtectedFooter() {
   return (
     <footer className="mx-4 mb-4 mt-8 bg-white">
       <div className="flex h-12 items-center justify-between px-8">
-        <p className="font-bold text-black">ABRICOT</p>
+        <img src="/images/Color=black.png" alt="LogoBlack" className="h-8 w-auto" />
         <p className="text-sm text-black">Abricot 2025</p>
       </div>
     </footer>

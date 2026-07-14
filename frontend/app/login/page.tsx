@@ -51,9 +51,7 @@ export default function LoginPage() {
           
 
           <div className="mx-auto mt-3 w-full max-w-[280px]">
-            <p className="mb-20 text-center text-[44px] font-black uppercase leading-none tracking-tight text-[#d45a08]">
-              Abricot
-            </p>
+            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 h-12 w-auto" />
             <h1 className="mb-8 text-5xl font-semibold leading-tight text-[#d45a08]">Connexion</h1>
 
             <form onSubmit={handleSubmit} className="space-y-5">

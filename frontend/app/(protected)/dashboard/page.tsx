@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import TaskCard from "@/components/TaskCard";
+import CreateProjectModal from "@/components/CreateProjectModal";
 import Link from "next/link";
 
 type Task = {
@@ -29,9 +30,6 @@ export default function DashboardPage() {
   const [view, setView] = useState<"list" | "kanban">("list");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [projectName, setProjectName] = useState("");
-  const [projectDescription, setProjectDescription] = useState("");
-  const [contributorsInput, setContributorsInput] = useState("");
   const [error, setError] = useState("");
 
   const todoTasks = tasks.filter((task) => task.status === "TODO");
@@ -80,52 +78,6 @@ export default function DashboardPage() {
     );
   };
 
-  const handleCreateProject = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-    setError("");
-
-    const token = sessionStorage.getItem("token");
-
-    const contributors = contributorsInput
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email.length > 0);
-
-    try {
-      const response = await fetch("http://localhost:8000/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: projectName,
-          description: projectDescription,
-          contributors,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(
-          data.message || "Erreur lors de la création du projet."
-        );
-        return;
-      }
-
-      setProjectName("");
-      setProjectDescription("");
-      setContributorsInput("");
-      setError("");
-      setIsCreateModalOpen(false);
-    } catch {
-      setError("Erreur réseau lors de la création du projet.");
-    }
-  };
-
   return (
     <main>
       <section className="flex items-start justify-between">
@@ -152,7 +104,7 @@ export default function DashboardPage() {
           onClick={() => setView("list")}
           className={`rounded-md px-4 py-2 text-sm transition ${
             view === "list"
-              ? "bg-orange-100 text-orange-600"
+              ? "bg-orange-100 text-orange-800"
               : "bg-white text-gray-500"
           }`}
         >
@@ -164,15 +116,13 @@ export default function DashboardPage() {
           onClick={() => setView("kanban")}
           className={`rounded-md px-4 py-2 text-sm transition ${
             view === "kanban"
-              ? "bg-orange-100 text-orange-600"
+              ? "bg-orange-100 text-orange-800"
               : "bg-white text-gray-500"
           }`}
         >
           Kanban
         </button>
       </div>
-
-      
 
       {error && (
         <p className="mt-4 text-sm text-red-500">
@@ -279,107 +229,15 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-16">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-project-title"
-            className="relative w-full max-w-md rounded-lg bg-white px-12 py-10 shadow-sm"
-          >
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(false)}
-              aria-label="Fermer la fenêtre"
-              className="absolute right-6 top-5 text-xl text-gray-400 hover:text-gray-600"
-            >
-              ×
-            </button>
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onProjectCreated={() => {
+          setIsCreateModalOpen(false);
+        }}
+      />
 
-            <h2
-              id="create-project-title"
-              className="mb-8 text-xl font-medium text-neutral-900"
-            >
-              Créer un projet
-            </h2>
-
-            <form
-              onSubmit={handleCreateProject}
-              className="space-y-5"
-            >
-              <div>
-                <label
-                  htmlFor="project-name"
-                  className="mb-2 block text-sm font-medium text-neutral-900"
-                >
-                  Titre*
-                </label>
-
-                <input
-                  id="project-name"
-                  type="text"
-                  required
-                  value={projectName}
-                  onChange={(event) =>
-                    setProjectName(event.target.value)
-                  }
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="project-description"
-                  className="mb-2 block text-sm font-medium text-neutral-900"
-                >
-                  Description*
-                </label>
-
-                <input
-                  id="project-description"
-                  type="text"
-                  required
-                  value={projectDescription}
-                  onChange={(event) =>
-                    setProjectDescription(event.target.value)
-                  }
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="contributors"
-                  className="mb-2 block text-sm font-medium text-neutral-900"
-                >
-                  Contributeurs
-                </label>
-
-                <input
-                  id="contributors"
-                  type="text"
-                  value={contributorsInput}
-                  onChange={(event) =>
-                    setContributorsInput(event.target.value)
-                  }
-                  placeholder="email1@test.com, email2@test.com"
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={!projectName || !projectDescription}
-                className="mt-6 rounded-md bg-neutral-900 px-6 py-3 text-sm text-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-              >
-                Ajouter un projet
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <Link href="/logout" className="mt-8 inline-block text-sm">
+      <Link href="/login" className="mt-8 inline-block text-sm">
         Se déconnecter
       </Link>
     </main>

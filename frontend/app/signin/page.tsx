@@ -50,25 +50,13 @@ export default function SignInPage() {
         <div className="flex w-full flex-col bg-white px-8 py-6 text-black md:w-[39%] md:px-14 md:py-8">
           
 
-          <div className="mx-auto mt-3 w-full max-w-[280px]">
-            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 h-12 w-auto" />
-            <h1 className="mb-8 text-5xl font-semibold leading-tight text-[#d45a08]">Inscription</h1>
+          <div className="mx-auto flex flex-col items-center content-stretch mt-3 w-full max-w-[280px] m-8">
+            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 w-[220px] h-[30px] mb-16" />
+            
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1">
-                <label htmlFor="name" className="text-xs text-[#2f2f2f]">
-                  Nom
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className="h-10 w-full border border-[#d4d4d4] bg-white px-3 text-sm outline-none transition focus:border-[#9b9b9b]"
-                  required
-                />
-              </div>
-
+            <form onSubmit={handleSubmit} className="space-y-5  mt-16">
+              <h1 className="mb-1 text-5xl font-semibold text-center leading-tight text-[#d45a08] mt-4">Inscription</h1>
+             
               <div className="space-y-1">
                 <label htmlFor="email" className="text-xs text-[#2f2f2f]">
                   Email
@@ -83,7 +71,7 @@ export default function SignInPage() {
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <label htmlFor="password" className="text-xs text-[#2f2f2f]">
                   Mot de passe
                 </label>
@@ -97,7 +85,7 @@ export default function SignInPage() {
                 />
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-red-600 space-y-2">{error}</p>}
 
               <button
                 type="submit"

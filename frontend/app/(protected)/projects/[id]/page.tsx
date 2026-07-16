@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+} from "react";
 import { useParams } from "next/navigation";
 import ProjectTaskCard from "@/components/ProjectTaskCard";
+import EditModalProject from "@/components/EditModalProject";
 
 type Comment = {
   id: string;
@@ -32,6 +37,7 @@ type ProjectMember = {
     name: string | null;
     email: string;
   };
+  joinedAt?: string;
 };
 
 type Task = {
@@ -39,7 +45,7 @@ type Task = {
   title: string;
   description: string | null;
   status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
-  
+
   dueDate: string | null;
   projectId: string;
   comments?: Comment[];
@@ -52,17 +58,25 @@ type Project = {
   description: string | null;
   tasks: Task[];
   members: ProjectMember[];
-  owner: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-  userRole: "ADMIN"|"CONTRIBUTOR";
+  createdAt: string;
+  ownerId: string;
 };
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
 
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+// Décode le payload d'un JWT côté client, sans dépendance externe.
+// À usage d'affichage uniquement : la vraie vérification des droits
+// se fait côté backend.
+function getCurrentUserId(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.userId ?? payload.id ?? payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -70,6 +84,7 @@ export default function ProjectDetailsPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] =
     useState(false);
@@ -85,8 +100,18 @@ export default function ProjectDetailsPage() {
 
   const [taskError, setTaskError] = useState("");
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
 
-  
+  useEffect(() => {
+    // sessionStorage n'est pas disponible côté serveur : on ne peut
+    // lire l'utilisateur connecté qu'après le montage, côté client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentUserId(getCurrentUserId(token));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -137,8 +162,7 @@ export default function ProjectDetailsPage() {
 
     fetchProjectData();
   }, [projectId]);
-  
- 
+
   const handleTaskDeleted = (taskId: string) => {
     setTasks((previousTasks) =>
       previousTasks.filter((task) => task.id !== taskId)
@@ -221,32 +245,65 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  const handleTaskUpdated = (updatedTask: Task) => {
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    );
+  };
+
+  const handleProjectUpdated = (
+    updatedProject: Omit<Project, "tasks">
+  ) => {
+    setProject((previousProject) =>
+      previousProject
+        ? { ...previousProject, ...updatedProject }
+        : previousProject
+    );
+    setEditModalOpen(false);
+  };
+
   if (!project) {
-    
     return <p>Chargement du projet...</p>;
   }
 
-  const canManageProject = project.userRole === "ADMIN";
+  // Seul le créateur (owner) du projet peut le modifier.
+  const canManageProject = currentUserId === project.ownerId;
 
-const canManageTasks =
-  project.userRole === "ADMIN" ||
-  project.userRole === "CONTRIBUTOR";
-
-  const handleTaskUpdated = (updatedTask: Task) => {
-  setTasks((previousTasks) =>
-    previousTasks.map((task) =>
-      task.id === updatedTask.id ? updatedTask : task
-    )
+  // Le owner correspond au membre dont le rôle est OWNER
+  // (il n'existe pas de champ project.owner séparé).
+  const ownerMember = project.members.find(
+    (member) => member.role === "OWNER"
   );
-};
 
+  // Le owner + les admins + les contributeurs peuvent gérer les tâches.
+  const currentUserMember = project.members.find(
+    (member) => member.user.id === currentUserId
+  );
 
-  
+  const canManageTasks =
+    currentUserId === project.ownerId ||
+    currentUserMember?.role === "ADMIN" ||
+    currentUserMember?.role === "CONTRIBUTOR";
+
   return (
     <main>
       <section className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{project.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">{project.name}</h1>
+
+            {canManageProject && (
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(true)}
+                className="text-left underline px-5 py-3 text-sm text-orange-500"
+              >
+                Modifier
+              </button>
+            )}
+          </div>
 
           <p className="mt-2 text-sm text-gray-500">
             {project.description || "Aucune description"}
@@ -254,14 +311,14 @@ const canManageTasks =
         </div>
 
         {canManageTasks && (
-  <button
-    type="button"
-    onClick={() => setIsCreateTaskModalOpen(true)}
-    className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white"
-  >
-    Créer une tâche
-  </button>
-)}
+          <button
+            type="button"
+            onClick={() => setIsCreateTaskModalOpen(true)}
+            className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white"
+          >
+            + Créer une tâche
+          </button>
+        )}
       </section>
 
       <section className="mt-8 rounded-xl bg-white p-8 shadow-sm">
@@ -292,7 +349,13 @@ const canManageTasks =
               <ProjectTaskCard
                 key={task.id}
                 task={task}
-                owner={project.owner}
+                owner={
+                  ownerMember?.user ?? {
+                    id: project.ownerId,
+                    name: null,
+                    email: "",
+                  }
+                }
                 members={project.members}
                 variant="List"
                 canDelete={canManageTasks}
@@ -410,10 +473,6 @@ const canManageTasks =
                 >
                   <option value="">Choisir un membre</option>
 
-                  <option value={project.owner.id}>
-                    {project.owner.name || project.owner.email}
-                  </option>
-
                   {project.members.map((member) => (
                     <option
                       key={member.id}
@@ -476,8 +535,6 @@ const canManageTasks =
                 </div>
               </div>
 
-            
-
               {taskError && (
                 <p className="text-sm text-red-500">
                   {taskError}
@@ -498,6 +555,15 @@ const canManageTasks =
             </form>
           </div>
         </div>
+      )}
+
+      {isEditModalOpen && (
+        <EditModalProject
+          isOpen={isEditModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          project={project}
+          onProjectUpdated={handleProjectUpdated}
+        />
       )}
     </main>
   );

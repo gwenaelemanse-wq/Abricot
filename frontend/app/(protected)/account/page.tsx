@@ -71,11 +71,9 @@ export default function AccountPage() {
     const token = sessionStorage.getItem("token");
 
     if (!firstName.trim() || !lastName.trim() || !formEmail.trim()) {
-      setMessage("Le prénom, le nom et l’adresse email sont obligatoires.");
+      setMessage("Le prénom, le nom et l'adresse email sont obligatoires.");
       return;
     }
-
-    
 
     try {
       setIsUpdating(true);
@@ -107,23 +105,40 @@ export default function AccountPage() {
         return;
       }
 
-      setUser(profileData.data.user);// Modifier le mot de passe uniquement si un nouveau est renseigné
+      setUser(profileData.data.user);
+
+      // Modifier le mot de passe uniquement si un nouveau est renseigné
       if (newPassword.trim()) {
         if (!currentPassword.trim()) {
           setMessage("Saisissez votre mot de passe actuel.");
           return;
         }
 
-        await fetch("/auth/password", {
-          method: "PUT",
-          body: JSON.stringify({
-            currentPassword,
-            newPassword,
-          }),
-        });
-      }
+        const passwordResponse = await fetch(
+          "http://localhost:8000/auth/password",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              currentPassword,
+              newPassword,
+            }),
+          }
+        );
 
-     
+        const passwordData = await passwordResponse.json();
+
+        if (!passwordResponse.ok) {
+          setMessage(
+            passwordData.message ||
+              "Erreur lors de la modification du mot de passe."
+          );
+          return;
+        }
+      }
 
       setCurrentPassword("");
       setNewPassword("");
@@ -213,29 +228,14 @@ export default function AccountPage() {
               </div>
 
               <div>
-              <label
-                htmlFor="new-password"
-                className="mb-2 block text-sm font-medium text-neutral-900"
-              >
-                Mot de passe
-              </label>
-
-              <input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                placeholder="••••••••••"
-                autoComplete="new-password"
-                className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
-              />
-            </div>
-              <div>
                 <label
                   htmlFor="new-password"
                   className="mb-2 block text-sm font-medium text-neutral-900"
                 >
                   Nouveau mot de passe
+                  <p className="mt-1 text-xs text-gray-500">
+                  Au moins 8 caractères, une majuscule, une minuscule, un caractère spécial et un chiffre.
+                  </p>
                 </label>
 
                 <input
@@ -252,24 +252,26 @@ export default function AccountPage() {
               </div>
 
               {newPassword && (
-              <div>
-                <label
-                  htmlFor="current-password"
-                  className="mb-2 block text-sm font-medium text-neutral-900"
-                >
-                  Mot de passe actuel
-                </label>
+                <div>
+                  <label
+                    htmlFor="current-password"
+                    className="mb-2 block text-sm font-medium text-neutral-900"
+                  >
+                    Mot de passe actuel
+                  </label>
 
-                <input
-                  id="current-password"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  autoComplete="current-password"
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
-                />
-              </div>
-            )}
+                  <input
+                    id="current-password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(event) =>
+                      setCurrentPassword(event.target.value)
+                    }
+                    autoComplete="current-password"
+                    className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
+                  />
+                </div>
+              )}
 
               {message && (
                 <p

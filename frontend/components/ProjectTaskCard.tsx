@@ -79,7 +79,7 @@ export default function ProjectTaskCard({
   );
   const [editAssigneeId, setEditAssigneeId] =  useState<string | null>(null);
   const [editError, setEditError] = useState ("");
-  const [isEditing, setIsEditing]= useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const badge = {
     TODO: "À faire",
@@ -197,6 +197,8 @@ export default function ProjectTaskCard({
   setEditError("");
 
   try {
+    setIsSavingEdit(true);
+
     const token = sessionStorage.getItem("token");
 
     const response = await fetch(
@@ -230,6 +232,8 @@ export default function ProjectTaskCard({
     setIsEditModalOpen(false);
   } catch {
     setEditError("Erreur réseau lors de la modification de la tâche.");
+  } finally {
+    setIsSavingEdit(false);
   }
 };
 
@@ -580,20 +584,18 @@ export default function ProjectTaskCard({
                 </div>
               </div>
 
-            
-
               {editError && (
                 <p className="text-sm text-red-500">
                   {editError}
                 </p>
               )}
 
-
         <button
           type="submit"
-          className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white"
+          disabled={isSavingEdit}
+          className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Enregistrer
+          {isSavingEdit ? "Enregistrement..." : "Enregistrer"}
         </button>
       </form>
     </div>

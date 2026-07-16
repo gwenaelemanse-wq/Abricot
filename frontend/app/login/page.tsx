@@ -50,11 +50,12 @@ export default function LoginPage() {
         <div className="flex w-[39%] flex-col bg-white px-14 py-8 text-black">
           
 
-          <div className="mx-auto mt-3 w-full max-w-[280px]">
-            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 h-12 w-auto" />
-            <h1 className="mb-8 text-5xl font-semibold leading-tight text-[#d45a08]">Connexion</h1>
+          <div className="mx-auto flex flex-col items-center content-stretch mt-3 w-full max-w-[280px] m-8">
+            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 w-[220px] h-[30px] mb-16" />
+            
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5 mt-16 w-[280px] h-[380px]">
+              <h1 className="mb-1 text-5xl font-semibold text-center leading-tight text-[#d45a08] mt-4">Connexion</h1>
               <div className="space-y-1">
                 <label htmlFor="email" className="text-xs text-[#2f2f2f]">
                   Email

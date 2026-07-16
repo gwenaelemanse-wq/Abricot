@@ -78,6 +78,23 @@ function getCurrentUserId(token: string): string | null {
   }
 }
 
+// Génère des initiales (2 lettres max) à partir du nom, ou de
+// l'email à défaut.
+function getInitials(user: {
+  name: string | null;
+  email: string;
+}): string {
+  if (user.name && user.name.trim().length > 0) {
+    const parts = user.name.trim().split(/\s+/);
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+
+  return user.email.slice(0, 2).toUpperCase();
+}
+
 export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.id as string;
@@ -101,6 +118,13 @@ export default function ProjectDetailsPage() {
   const [taskError, setTaskError] = useState("");
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
+
+  const [taskViewMode, setTaskViewMode] = useState<"list" | "calendar">(
+    "list"
+  );
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED"
+  >("ALL");
 
   useEffect(() => {
     // sessionStorage n'est pas disponible côté serveur : on ne peut
@@ -287,6 +311,19 @@ export default function ProjectDetailsPage() {
     currentUserMember?.role === "ADMIN" ||
     currentUserMember?.role === "CONTRIBUTOR";
 
+  const filteredTasks =
+    statusFilter === "ALL"
+      ? tasks
+      : tasks.filter((task) => task.status === statusFilter);
+
+  const statusFilterLabels: Record<typeof statusFilter, string> = {
+    ALL: "Statuts",
+    TODO: "À faire",
+    IN_PROGRESS: "En cours",
+    DONE: "Terminée",
+    CANCELLED: "Annulée",
+  };
+
   return (
     <main>
       <section className="flex items-start justify-between">
@@ -321,8 +358,58 @@ export default function ProjectDetailsPage() {
         )}
       </section>
 
+      <section className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-100 px-6 py-4">
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-semibold text-neutral-900">
+            Contributeurs
+          </span>
+
+          <span className="text-sm text-gray-500">
+            {project.members.length} personne
+            {project.members.length > 1 ? "s" : ""}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {project.members.map((member) => {
+            const isOwner = member.role === "OWNER";
+
+            return (
+              <div
+                key={member.id}
+                className={`flex items-center gap-2 rounded-full px-2 py-1 ${
+                  isOwner ? "bg-white" : "bg-gray-200"
+                }`}
+              >
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${
+                    isOwner
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-gray-300 text-gray-700"
+                  }`}
+                >
+                  {getInitials(member.user)}
+                </span>
+
+                <span
+                  className={`text-xs ${
+                    isOwner
+                      ? "font-medium text-orange-600"
+                      : "text-gray-700"
+                  }`}
+                >
+                  {isOwner
+                    ? "Propriétaire"
+                    : member.user.name || member.user.email}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="mt-8 rounded-xl bg-white p-8 shadow-sm">
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-medium">Tâches</h2>
 
@@ -331,21 +418,79 @@ export default function ProjectDetailsPage() {
             </p>
           </div>
 
-          <input
-            type="search"
-            placeholder="Rechercher une tâche"
-            aria-label="Rechercher une tâche"
-            className="w-72 rounded-md border border-gray-200 px-4 py-3 text-sm"
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setTaskViewMode("list")}
+                aria-pressed={taskViewMode === "list"}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm transition ${
+                  taskViewMode === "list"
+                    ? "bg-orange-100 text-orange-800"
+                    : "bg-white text-gray-500 border border-gray-200"
+                }`}
+              >
+                Liste
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTaskViewMode("calendar")}
+                aria-pressed={taskViewMode === "calendar"}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm transition ${
+                  taskViewMode === "calendar"
+                    ? "bg-orange-100 text-orange-800"
+                    : "bg-white text-gray-500 border border-gray-200"
+                }`}
+              >
+                Calendrier
+              </button>
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value as typeof statusFilter
+                )
+              }
+              aria-label="Filtrer par statut"
+              className="rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-orange-500"
+            >
+              {(
+                Object.keys(statusFilterLabels) as Array<
+                  typeof statusFilter
+                >
+              ).map((status) => (
+                <option key={status} value={status}>
+                  {statusFilterLabels[status]}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="search"
+              placeholder="Rechercher une tâche"
+              aria-label="Rechercher une tâche"
+              className="w-72 rounded-md border border-gray-200 px-4 py-3 text-sm"
+            />
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {tasks.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              Aucune tâche pour ce projet.
-            </p>
-          ) : (
-            tasks.map((task) => (
+        {taskViewMode === "calendar" ? (
+          <div className="rounded-md border border-dashed border-gray-300 p-10 text-center text-sm text-gray-500">
+            Vue calendrier disponible prochainement.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredTasks.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                {tasks.length === 0
+                  ? "Aucune tâche pour ce projet."
+                  : "Aucune tâche ne correspond à ce statut."}
+              </p>
+            ) : (
+              filteredTasks.map((task) => (
               <ProjectTaskCard
                 key={task.id}
                 task={task}
@@ -363,8 +508,9 @@ export default function ProjectDetailsPage() {
                 onUpdated={handleTaskUpdated}
               />
             ))
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </section>
 
       {isCreateTaskModalOpen && (

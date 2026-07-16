@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 
 export default function LoginPage() {
@@ -11,6 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] =
+    useState(false);
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,9 +97,13 @@ export default function LoginPage() {
                 {isLoading ? "Connexion..." : "Se connecter"}
               </button>
 
-              <Link href="#" className="block text-center text-xs text-[#d45a08] underline">
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordModalOpen(true)}
+                className="block w-full text-center text-xs text-[#d45a08] underline"
+              >
                 Mot de passe oublié?
-              </Link>
+              </button>
             </form>
 
             <p className="mt-28 text-xs text-[#2f2f2f]">
@@ -118,6 +125,11 @@ export default function LoginPage() {
           />
         </div>
       </section>
+
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordModalOpen}
+        onClose={() => setIsForgotPasswordModalOpen(false)}
+      />
     </main>
   );
 }

@@ -28,6 +28,7 @@ type Task = {
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [view, setView] = useState<"list" | "kanban">("list");
+  const [userName, setUserName] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +40,23 @@ export default function DashboardPage() {
   );
 
   const doneTasks = tasks.filter((task) => task.status === "DONE");
+
+  useEffect(() => {
+    // L'utilisateur a été stocké dans sessionStorage au moment du
+    // login (voir login/page.tsx). Pas besoin d'un nouvel appel API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser: { name: string | null; email: string } =
+          JSON.parse(storedUser);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUserName(parsedUser.name || parsedUser.email);
+      } catch {
+        // Ignoré : si le JSON est invalide, on garde userName à null.
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchAssignedTasks = async () => {
@@ -85,7 +103,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold">Tableau de bord</h1>
 
           <p className="mt-2 text-sm text-gray-600">
-            Bonjour Alice Dupont, voici un aperçu de vos projets et tâches
+            Bonjour {userName ?? "..."}, voici un aperçu de vos projets et tâches
           </p>
         </div>
 

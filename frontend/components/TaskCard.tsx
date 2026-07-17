@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { FolderIcon, CalendarIcon, CommentIcon } from "@/components/icons/CustomIcons";
 import Link from "next/link";
 
 type TaskCardProps = {
@@ -26,12 +26,7 @@ type TaskCardProps = {
 export default function TaskCard({
   task,
   variant = "List",
-  canDelete,
-  onDeleted,
 }: TaskCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-
   const badge = {
     TODO: "À faire",
     IN_PROGRESS: "En cours",
@@ -44,56 +39,6 @@ export default function TaskCard({
     IN_PROGRESS: "bg-orange-100 text-orange-500",
     DONE: "bg-green-100 text-green-600",
     CANCELLED: "bg-gray-200 text-gray-500",
-  };
-
-  const handleDeleteTask = async () => {
-    const projectId = task.project?.id;
-
-    if (!projectId) {
-      setDeleteError("Impossible de retrouver le projet de cette tâche.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Voulez-vous vraiment supprimer cette tâche ?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setDeleteError("");
-
-    try {
-      setIsDeleting(true);
-
-      const token = sessionStorage.getItem("token");
-
-      const response = await fetch(
-        `http://localhost:8000/projects/${projectId}/tasks/${task.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setDeleteError(
-          data.message || "Erreur lors de la suppression de la tâche."
-        );
-        return;
-      }
-
-      onDeleted(task.id);
-    } catch {
-      setDeleteError("Erreur réseau lors de la suppression de la tâche.");
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   return (
@@ -122,12 +67,17 @@ export default function TaskCard({
         </span>
       </div>
 
-      <div className="mt-6 flex items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-5 text-xs text-gray-400">
-          <span>📁 {task.project?.name ?? "Nom du projet"}</span>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+          <span className="flex items-center gap-1">
+            <FolderIcon className="h-3.5 w-3.5" />
+            {task.project?.name ?? "Nom du projet"}
+          </span>
 
-          <span>
-            📅{" "}
+          <span className="text-gray-300">|</span>
+
+          <span className="flex items-center gap-1">
+            <CalendarIcon className="h-3.5 w-3.5" />
             {task.dueDate
               ? new Date(task.dueDate).toLocaleDateString("fr-FR", {
                   day: "numeric",
@@ -136,37 +86,23 @@ export default function TaskCard({
               : "-"}
           </span>
 
-          <span>💬 {task.comments?.length ?? 0}</span>
+          <span className="text-gray-300">|</span>
+
+          <span className="flex items-center gap-1">
+            <CommentIcon className="h-3.5 w-3.5" />
+            {task.comments?.length ?? 0}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          {task.project?.id && (
-            <Link
-              href={`/projects/${task.project.id}`}
-              className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
-            >
-              Voir
-            </Link>
-          )}
-
-          {canDelete && (
-            <button
-              type="button"
-              onClick={handleDeleteTask}
-              disabled={isDeleting}
-              className="rounded-md bg-red-500 px-7 py-3 text-sm text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isDeleting ? "Suppression..." : "Supprimer"}
-            </button>
-          )}
-        </div>
+        {task.project?.id && (
+          <Link
+            href={`/projects/${task.project.id}`}
+            className="rounded-md bg-neutral-900 px-7 py-3 text-sm text-white transition hover:bg-neutral-800"
+          >
+            Voir
+          </Link>
+        )}
       </div>
-
-      {deleteError && (
-        <p className="mt-4 text-sm text-red-500">
-          {deleteError}
-        </p>
-      )}
     </article>
   );
 }

@@ -6,8 +6,11 @@ import {
   type FormEvent,
 } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import ProjectTaskCard from "@/components/ProjectTaskCard";
 import EditModalProject from "@/components/EditModalProject";
+import { useModalAccessibility } from "@/hooks/useModalAccessibility";
 
 type Comment = {
   id: string;
@@ -112,8 +115,9 @@ export default function ProjectDetailsPage() {
     useState<TaskPriority>("MEDIUM");
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("TODO");
   const [taskDueDate, setTaskDueDate] = useState("");
-  const [taskAssigneeId, setTaskAssigneeId] =
-    useState<string | null>(null);
+  const [taskAssigneeIds, setTaskAssigneeIds] = useState<string[]>([]);
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] =
+    useState(false);
 
   const [taskError, setTaskError] = useState("");
   const [isCreatingTask, setIsCreatingTask] = useState(false);
@@ -199,7 +203,8 @@ export default function ProjectDetailsPage() {
     setTaskPriority("MEDIUM");
     setTaskStatus("TODO");
     setTaskDueDate("");
-    setTaskAssigneeId(null);
+    setTaskAssigneeIds([]);
+    setIsAssigneeDropdownOpen(false);
     setTaskError("");
   };
 
@@ -207,6 +212,11 @@ export default function ProjectDetailsPage() {
     resetCreateTaskForm();
     setIsCreateTaskModalOpen(false);
   };
+
+  const createTaskModalRef = useModalAccessibility(
+    isCreateTaskModalOpen,
+    closeCreateTaskModal
+  );
 
   const handleCreateTask = async (
     event: FormEvent<HTMLFormElement>
@@ -238,9 +248,7 @@ export default function ProjectDetailsPage() {
             priority: taskPriority,
             status: taskStatus,
             dueDate: taskDueDate || undefined,
-            assigneeIds: taskAssigneeId
-              ? [taskAssigneeId]
-              : [],
+            assigneeIds: taskAssigneeIds,
           }),
         }
       );
@@ -295,10 +303,11 @@ export default function ProjectDetailsPage() {
   // Seul le créateur (owner) du projet peut le modifier.
   const canManageProject = currentUserId === project.ownerId;
 
-  // Le owner correspond au membre dont le rôle est OWNER
-  // (il n'existe pas de champ project.owner séparé).
+  // Le owner correspond au membre dont l'id correspond à
+  // project.ownerId (plus fiable que de se fier au champ role,
+  // qui peut ne pas contenir exactement "OWNER" selon le backend).
   const ownerMember = project.members.find(
-    (member) => member.role === "OWNER"
+    (member) => member.user.id === project.ownerId
   );
 
   // Le owner + les admins + les contributeurs peuvent gérer les tâches.
@@ -311,13 +320,31 @@ export default function ProjectDetailsPage() {
     currentUserMember?.role === "ADMIN" ||
     currentUserMember?.role === "CONTRIBUTOR";
 
+  // Tri par échéance la plus proche d'abord ; les tâches sans date
+  // sont reléguées à la fin (elles ne sont pas "urgentes").
+  const sortedTasks = [...tasks].sort((taskA, taskB) => {
+    if (!taskA.dueDate && !taskB.dueDate) {
+      return 0;
+    }
+    if (!taskA.dueDate) {
+      return 1;
+    }
+    if (!taskB.dueDate) {
+      return -1;
+    }
+    return (
+      new Date(taskA.dueDate).getTime() -
+      new Date(taskB.dueDate).getTime()
+    );
+  });
+
   const filteredTasks =
     statusFilter === "ALL"
-      ? tasks
-      : tasks.filter((task) => task.status === statusFilter);
+      ? sortedTasks
+      : sortedTasks.filter((task) => task.status === statusFilter);
 
   const statusFilterLabels: Record<typeof statusFilter, string> = {
-    ALL: "Statuts",
+    ALL: "Tous les statuts",
     TODO: "À faire",
     IN_PROGRESS: "En cours",
     DONE: "Terminée",
@@ -327,24 +354,34 @@ export default function ProjectDetailsPage() {
   return (
     <main>
       <section className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{project.name}</h1>
+        <div className="flex items-start gap-4">
+          <Link
+            href="/projects"
+            aria-label="Retour aux projets"
+            className="mt-1 text-gray-500 transition hover:text-gray-700"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
 
-            {canManageProject && (
-              <button
-                type="button"
-                onClick={() => setEditModalOpen(true)}
-                className="text-left underline px-5 py-3 text-sm text-orange-500"
-              >
-                Modifier
-              </button>
-            )}
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold">{project.name}</h1>
+
+              {canManageProject && (
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(true)}
+                  className="text-left underline px-5 py-3 text-sm text-orange-500"
+                >
+                  Modifier
+                </button>
+              )}
           </div>
 
           <p className="mt-2 text-sm text-gray-500">
             {project.description || "Aucune description"}
           </p>
+        </div>
         </div>
 
         {canManageTasks && (
@@ -372,7 +409,7 @@ export default function ProjectDetailsPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {project.members.map((member) => {
-            const isOwner = member.role === "OWNER";
+            const isOwner = member.user.id === project.ownerId;
 
             return (
               <div
@@ -516,6 +553,7 @@ export default function ProjectDetailsPage() {
       {isCreateTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 pt-16">
           <div
+            ref={createTaskModalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-task-title"
@@ -599,35 +637,93 @@ export default function ProjectDetailsPage() {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label
-                  htmlFor="task-assignee"
+                  id="task-assignee-label"
                   className="mb-2 block text-sm font-medium text-neutral-900"
                 >
                   Assigné à
                 </label>
 
-                <select
-                  id="task-assignee"
-                  value={taskAssigneeId ?? ""}
-                  onChange={(event) =>
-                    setTaskAssigneeId(
-                      event.target.value || null
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsAssigneeDropdownOpen(
+                      (previousValue) => !previousValue
                     )
                   }
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
+                  aria-haspopup="listbox"
+                  aria-expanded={isAssigneeDropdownOpen}
+                  aria-labelledby="task-assignee-label"
+                  className="flex h-11 w-full items-center justify-between rounded-md border border-gray-200 px-3 text-left text-sm outline-none focus:border-orange-500"
                 >
-                  <option value="">Choisir un membre</option>
+                  <span
+                    className={
+                      taskAssigneeIds.length === 0
+                        ? "text-gray-400"
+                        : "text-neutral-900"
+                    }
+                  >
+                    {taskAssigneeIds.length === 0
+                      ? "Choisir un ou plusieurs membres"
+                      : `${taskAssigneeIds.length} membre${
+                          taskAssigneeIds.length > 1 ? "s" : ""
+                        } assigné${
+                          taskAssigneeIds.length > 1 ? "s" : ""
+                        }`}
+                  </span>
 
-                  {project.members.map((member) => (
-                    <option
-                      key={member.id}
-                      value={member.user.id}
-                    >
-                      {member.user.name || member.user.email}
-                    </option>
-                  ))}
-                </select>
+                  <span
+                    className={`text-gray-400 transition-transform ${
+                      isAssigneeDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ⌄
+                  </span>
+                </button>
+
+                {isAssigneeDropdownOpen && (
+                  <div
+                    role="listbox"
+                    aria-multiselectable="true"
+                    className="absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg"
+                  >
+                    {project.members.map((member) => {
+                      const isSelected = taskAssigneeIds.includes(
+                        member.user.id
+                      );
+
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() =>
+                            setTaskAssigneeIds((previousIds) =>
+                              isSelected
+                                ? previousIds.filter(
+                                    (id) => id !== member.user.id
+                                  )
+                                : [...previousIds, member.user.id]
+                            )
+                          }
+                          className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-orange-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            tabIndex={-1}
+                            className="pointer-events-none h-4 w-4 rounded border-gray-300 text-orange-600"
+                          />
+
+                          {member.user.name || member.user.email}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>

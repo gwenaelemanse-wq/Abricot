@@ -1,5 +1,7 @@
 "use client";
 
+import { useModalAccessibility } from "@/hooks/useModalAccessibility";
+
 type ForgotPasswordModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -9,6 +11,8 @@ export default function ForgotPasswordModal({
   isOpen,
   onClose,
 }: ForgotPasswordModalProps) {
+  const modalRef = useModalAccessibility(isOpen, onClose);
+
   if (!isOpen) {
     return null;
   }
@@ -16,6 +20,7 @@ export default function ForgotPasswordModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="forgot-password-title"
@@ -43,9 +48,14 @@ export default function ForgotPasswordModal({
         </p>
 
         <p className="mt-3 text-sm text-gray-600">
-          Merci de contacter un administrateur pour réinitialiser
-          votre mot de passe.
-          admin2@abrico.com
+          Merci de contacter un administrateur à l&apos;adresse{" "}
+          <a
+            href="mailto:support@abricot.app"
+            className="text-orange-600 underline"
+          >
+            support@abricot.app
+          </a>{" "}
+          pour réinitialiser votre mot de passe.
         </p>
 
         <button

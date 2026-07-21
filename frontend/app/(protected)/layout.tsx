@@ -7,7 +7,7 @@ import Link from "next/link";
 import { LayoutDashboard, Folder } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-function getInitials(person: { name: string | null; email: string }): string {
+export function getInitials(person: { name: string | null; email: string }): string {
   if (person.name && person.name.trim().length > 0) {
     return person.name
       .trim()
@@ -38,18 +38,32 @@ export default function ProtectedLayout({
   useEffect(() => {
     // sessionStorage n'est pas disponible côté serveur : on ne peut
     // lire l'utilisateur connecté qu'après le montage, côté client.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const user: { name: string | null; email: string } =
-          JSON.parse(storedUser);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUserInitials(getInitials(user));
-      } catch {
-        // JSON invalide, on ignore
+    const readUserInitials = () => {
+      const storedUser = sessionStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const user: { name: string | null; email: string } =
+            JSON.parse(storedUser);
+          setUserInitials(getInitials(user));
+        } catch {
+          // JSON invalide, on ignore
+        }
       }
-    }
+    };
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    readUserInitials();
+
+    // Le layout ne se démonte pas entre deux pages protégées (ex:
+    // /account -> /dashboard), donc l'effet ci-dessus ne se
+    // redéclenche pas tout seul. On écoute ce signal, émis par
+    // /account après une modification du profil, pour se mettre à
+    // jour sans recharger toute la page.
+    window.addEventListener("user-updated", readUserInitials);
+
+    return () => {
+      window.removeEventListener("user-updated", readUserInitials);
+    };
   }, []);
 
   return (
@@ -59,7 +73,7 @@ export default function ProtectedLayout({
         userInitials={userInitials}
       />
 
-      <main className="mx-auto max-w-7xl px-20 py-12">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-8 lg:px-20 lg:py-12">
         {children}
       </main>
 
@@ -76,43 +90,43 @@ export function ProtectedHeader({
   userInitials: string;
 }) {
   return (
-    <header className="mx-4 mt-4 bg-white">
-      <nav className="flex h-20 items-center justify-between px-20">
+    <header className="mx-2 mt-2 bg-white sm:mx-4 sm:mt-4">
+      <nav className="flex h-16 items-center justify-between px-3 sm:h-20 sm:px-8 lg:px-20">
         <img
           src="/images/Color=orange.png"
-          alt="LogoOrange"
-          className="mt-16 w-[147px] h-[20px] mb-16"
+          alt="Logo Abricot"
+          className="h-4 w-auto sm:h-5"
         />
 
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-1 sm:gap-4 lg:gap-10">
           <Link
             href="/dashboard"
-            className={`flex items-center gap-3 rounded-md px-6 py-3 text-sm transition ${
+            className={`flex items-center gap-2 rounded-md px-2 py-2 text-sm transition sm:gap-3 sm:px-6 sm:py-3 ${
               pathname === "/dashboard"
                 ? "bg-neutral-900 text-white"
                 : "text-orange-600 hover:bg-orange-50"
             }`}
           >
             <LayoutDashboard size={18} />
-            <span>Tableau de bord</span>
+            <span className="hidden sm:inline">Tableau de bord</span>
           </Link>
 
           <Link
             href="/projects"
-            className={`flex items-center gap-3 rounded-md px-6 py-3 text-sm transition ${
+            className={`flex items-center gap-2 rounded-md px-2 py-2 text-sm transition sm:gap-3 sm:px-6 sm:py-3 ${
               pathname.startsWith("/projects")
                 ? "bg-neutral-900 text-white"
                 : "text-orange-700 hover:bg-orange-50"
             }`}
           >
             <Folder size={18} />
-            <span>Projets</span>
+            <span className="hidden sm:inline">Projets</span>
           </Link>
         </div>
 
         <Link
           href="/account"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-sm"
+          className="ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs sm:ml-0 sm:h-12 sm:w-12 sm:text-sm"
         >
           {userInitials}
         </Link>
@@ -124,11 +138,11 @@ export function ProtectedHeader({
 export function ProtectedFooter() {
   return (
     <footer className="mx-4 mb-4 mt-8 bg-white">
-      <div className="flex h-12 items-center justify-between px-8">
+      <div className="flex h-12 items-center justify-between px-4 sm:px-8">
         <img
           src="/images/Color=black.png"
-          alt="LogoBlack"
-          className="mt-16 w-[101px] h-[13px] mb-16"
+          alt="Logo Abricot"
+          className="h-3 w-auto"
         />
         <p className="text-sm text-black">Abricot 2025</p>
       </div>

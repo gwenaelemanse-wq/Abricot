@@ -6,6 +6,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useModalAccessibility } from "@/hooks/useModalAccessibility";
 
 type Member = {
   id: string;
@@ -160,6 +161,8 @@ export default function CreateProjectModal({
     onClose();
   };
 
+  const modalRef = useModalAccessibility(isOpen, closeModal);
+
   const handleCreateProject = async (
     event: FormEvent<HTMLFormElement>
   ) => {
@@ -229,6 +232,7 @@ export default function CreateProjectModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/20 px-4 pt-16">
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-project-title"

@@ -99,7 +99,9 @@ export default function ProjectTaskCard({
   const [editDueDate, setEditDueDate] = useState(
     task.dueDate ? task.dueDate.slice(0, 10) : ""
   );
-  const [editAssigneeId, setEditAssigneeId] =  useState<string | null>(null);
+  const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
+  const [isEditAssigneeDropdownOpen, setIsEditAssigneeDropdownOpen] =
+    useState(false);
   const [editError, setEditError] = useState ("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -109,7 +111,7 @@ export default function ProjectTaskCard({
     }
 
     // Resynchronise le formulaire avec les données actuelles de la
-    // tâche à chaque ouverture, pour ne pas perdre l'assigné existant.
+    // tâche à chaque ouverture, pour ne pas perdre les assignés existants.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditTitle(task.title);
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -119,7 +121,9 @@ export default function ProjectTaskCard({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditDueDate(task.dueDate ? task.dueDate.slice(0, 10) : "");
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditAssigneeId(task.assignees?.[0]?.user.id ?? null);
+    setEditAssigneeIds(
+      task.assignees?.map((assignee) => assignee.user.id) ?? []
+    );
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditError("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -277,7 +281,7 @@ export default function ProjectTaskCard({
           description: editDescription.trim(),
           status: editStatus,
           dueDate: editDueDate || null,
-          assigneeIds: editAssigneeId ? [editAssigneeId] : [],
+          assigneeIds: editAssigneeIds,
         }),
       }
     );
@@ -308,14 +312,14 @@ export default function ProjectTaskCard({
       
     >
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-neutral-900">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="break-words text-lg font-semibold text-neutral-900">
               {task.title}
             </h3>
 
             <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
                 badgeColor[task.status]
               }`}
             >
@@ -328,7 +332,7 @@ export default function ProjectTaskCard({
           </p>
         </div>
 
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setIsMenuOpen((previousValue) => !previousValue)}
@@ -614,39 +618,94 @@ export default function ProjectTaskCard({
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label
-                  htmlFor="task-assignee"
+                  id="edit-task-assignee-label"
                   className="mb-2 block text-sm font-medium text-neutral-900"
                 >
                   Assigné à
                 </label>
 
-                <select
-                  id="task-assignee"
-                  value={editAssigneeId ?? ""}
-                  onChange={(event) =>
-                    setEditAssigneeId(
-                      event.target.value || null
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsEditAssigneeDropdownOpen(
+                      (previousValue) => !previousValue
                     )
                   }
-                  className="h-11 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-orange-500"
+                  aria-haspopup="listbox"
+                  aria-expanded={isEditAssigneeDropdownOpen}
+                  aria-labelledby="edit-task-assignee-label"
+                  className="flex h-11 w-full items-center justify-between rounded-md border border-gray-200 px-3 text-left text-sm outline-none focus:border-orange-500"
                 >
-                  <option value="">Choisir un membre</option>
+                  <span
+                    className={
+                      editAssigneeIds.length === 0
+                        ? "text-gray-400"
+                        : "text-neutral-900"
+                    }
+                  >
+                    {editAssigneeIds.length === 0
+                      ? "Choisir un ou plusieurs membres"
+                      : `${editAssigneeIds.length} membre${
+                          editAssigneeIds.length > 1 ? "s" : ""
+                        } assigné${
+                          editAssigneeIds.length > 1 ? "s" : ""
+                        }`}
+                  </span>
 
-                  <option value={owner.id}>
-                    {owner.name || owner.email}
-                  </option>
+                  <span
+                    className={`text-gray-400 transition-transform ${
+                      isEditAssigneeDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ⌄
+                  </span>
+                </button>
 
-                  {members.map((member) => (
-                    <option
-                      key={member.id}
-                      value={member.user.id}
-                    >
-                      {member.user.name || member.user.email}
-                    </option>
-                  ))}
-                </select>
+                {isEditAssigneeDropdownOpen && (
+                  <div
+                    role="listbox"
+                    aria-multiselectable="true"
+                    className="absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg"
+                  >
+                    {members.map((member) => {
+                      const person = member.user;
+                      const isSelected = editAssigneeIds.includes(
+                        person.id
+                      );
+
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() =>
+                            setEditAssigneeIds((previousIds) =>
+                              isSelected
+                                ? previousIds.filter(
+                                    (id) => id !== person.id
+                                  )
+                                : [...previousIds, person.id]
+                            )
+                          }
+                          className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-orange-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            tabIndex={-1}
+                            className="pointer-events-none h-4 w-4 rounded border-gray-300 text-orange-600"
+                          />
+
+                          {person.name || person.email}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>

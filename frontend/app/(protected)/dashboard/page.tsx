@@ -33,13 +33,33 @@ export default function DashboardPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const todoTasks = tasks.filter((task) => task.status === "TODO");
+  // "Aujourd'hui" une seule fois, pour comparer le mois/année de
+  // chaque tâche avec le mois/année actuels.
+  const today = new Date();
 
-  const inProgressTasks = tasks.filter(
+  const kanbanTasks = tasks.filter((task) => {
+    // Pas de date d'échéance -> toujours visible dans le Kanban,
+    // sinon la personne assignée ne la verrait plus nulle part
+    // sur son tableau de bord.
+    if (!task.dueDate) {
+      return true;
+    }
+
+    const dueDate = new Date(task.dueDate);
+
+    return (
+      dueDate.getMonth() === today.getMonth() &&
+      dueDate.getFullYear() === today.getFullYear()
+    );
+  });
+
+  const todoTasks = kanbanTasks.filter((task) => task.status === "TODO");
+
+  const inProgressTasks = kanbanTasks.filter(
     (task) => task.status === "IN_PROGRESS"
   );
 
-  const doneTasks = tasks.filter((task) => task.status === "DONE");
+  const doneTasks = kanbanTasks.filter((task) => task.status === "DONE");
 
   useEffect(() => {
     // L'utilisateur a été stocké dans sessionStorage au moment du
@@ -98,7 +118,7 @@ export default function DashboardPage() {
 
   return (
     <main>
-      <section className="flex items-start justify-between">
+      <section className="flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Tableau de bord</h1>
 
@@ -110,7 +130,7 @@ export default function DashboardPage() {
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="rounded-md bg-neutral-900 px-5 py-3 text-sm text-white"
+          className="w-full rounded-md bg-neutral-900 px-5 py-3 text-sm text-white sm:w-auto"
         >
           + Créer un projet
         </button>
@@ -150,8 +170,8 @@ export default function DashboardPage() {
 
       {view === "list" && (
         <div className="mt-6 space-y-4">
-          <section className="mt-6 rounded-xl bg-white p-10 shadow-sm">
-        <div className="flex items-start justify-between">
+          <section className="mt-6 rounded-xl bg-white p-5 shadow-sm sm:p-10">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-lg font-medium">Mes tâches assignées</h2>
 
@@ -164,7 +184,7 @@ export default function DashboardPage() {
             type="search"
             placeholder="Rechercher une tâche"
             aria-label="Rechercher une tâche"
-            className="w-72 rounded-md border border-gray-200 px-4 py-3 text-sm"
+            className="w-full rounded-md border border-gray-200 px-4 py-3 text-sm sm:w-72"
           />
         </div>
       </section>
@@ -187,7 +207,7 @@ export default function DashboardPage() {
       )}
 
       {view === "kanban" && (
-        <section className="mt-6 grid grid-cols-3 gap-6">
+        <section className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">
               À faire{" "}
@@ -255,7 +275,7 @@ export default function DashboardPage() {
         }}
       />
 
-      <Link href="/login" className="mt-8 inline-block text-sm">
+      <Link href="/logout" className="mt-8 inline-block text-sm">
         Se déconnecter
       </Link>
     </main>

@@ -48,17 +48,17 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#d7d7db] p-8">
-      <section className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1360px] overflow-hidden rounded-sm border border-[#2f7fdb] bg-white">
-        <div className="flex w-[39%] flex-col bg-white px-14 py-8 text-black">
+    <main className="min-h-screen bg-[#d7d7db] p-4 sm:p-8">
+      <section className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1360px] flex-col overflow-hidden rounded-sm border border-[#2f7fdb] bg-white lg:flex-row">
+        <div className="order-last flex w-full flex-col bg-white px-6 py-8 text-black sm:px-14 lg:order-first lg:w-[39%]">
           
 
-          <div className="mx-auto flex flex-col items-center content-stretch mt-3 w-full max-w-[280px] m-8">
-            <img src="/images/Color=orange.png" alt="LogoOrange" className="mb-8 w-[220px] h-[30px] mb-16" />
+          <div className="mx-auto flex w-full max-w-[280px] flex-col items-center content-stretch mt-3 lg:m-8">
+            <img src="/images/Color=orange.png" alt="Logo Abricot" className="mb-8 h-auto w-[180px] sm:w-[220px]" />
             
 
-            <form onSubmit={handleSubmit} className="space-y-5 mt-16 w-[280px] h-[380px]">
-              <h1 className="mb-1 text-5xl font-semibold text-center leading-tight text-[#d45a08] mt-4">Connexion</h1>
+            <form onSubmit={handleSubmit} className="w-full max-w-[280px] space-y-5 mt-8 lg:mt-16">
+              <h1 className="mb-1 text-4xl sm:text-5xl font-semibold text-center leading-tight text-[#d45a08] mt-4">Connexion</h1>
               <div className="space-y-1">
                 <label htmlFor="email" className="text-xs text-[#2f2f2f]">
                   Email
@@ -106,7 +106,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p className="mt-28 text-xs text-[#2f2f2f]">
+            <p className="mt-12 lg:mt-28 text-xs text-[#2f2f2f]">
               Pas encore de compte ?{" "}
               <Link href="/signin" className="text-[#d45a08] underline">
                 Créer un compte
@@ -115,7 +115,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative flex-1">
+        <div className="relative order-first h-40 w-full sm:h-56 lg:order-last lg:h-auto lg:w-auto lg:flex-1">
           <Image
             src="/images/backgroundConnexion.jpg"
             alt="Bureau avec fournitures"

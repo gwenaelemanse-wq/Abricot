@@ -97,7 +97,7 @@ export default function SignInPage() {
 
             <p className="mt-12 lg:mt-28 text-xs text-[#2f2f2f]">
               Déjà un compte ?{" "}
-              <Link href="/login" className="text-[#d45a08] underline">
+              <Link href="/login" className="text-[#C2410C] underline">
                 Se connecter
               </Link>
             </p>

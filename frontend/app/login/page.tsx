@@ -100,7 +100,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setIsForgotPasswordModalOpen(true)}
-                className="block w-full text-center text-xs text-[#d45a08] underline"
+                className="block w-full text-center text-xs text-[#C2410C] underline"
               >
                 Mot de passe oublié?
               </button>
@@ -108,7 +108,7 @@ export default function LoginPage() {
 
             <p className="mt-12 lg:mt-28 text-xs text-[#2f2f2f]">
               Pas encore de compte ?{" "}
-              <Link href="/signin" className="text-[#d45a08] underline">
+              <Link href="/signin" className="text-[#C2410C] underline">
                 Créer un compte
               </Link>
             </p>

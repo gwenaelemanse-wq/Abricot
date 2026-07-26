@@ -46,16 +46,16 @@ type Assignee = {
 };
 
 type ProjectTaskCardProps = {
-  task: {
+      task: {
     id: string;
     title: string;
     description: string | null;
     status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
     projectId: string;
     dueDate: string | null;
-    comments?: Comment[];
+    comments?: Comment[] | undefined;
     assignees?: Assignee[];
-  };
+    }
     owner: {
     id: string;
     name: string | null;
@@ -447,7 +447,7 @@ export default function ProjectTaskCard({
           <div className="space-y-3">
             {comments.map((comment) => {
               const isCommentFromOwner =
-                comment.author?.id === owner.id;
+                comment.author?.id === (owner?.id ?? "");
 
               return (
                 <div key={comment.id} className="flex items-start gap-3">
@@ -503,7 +503,7 @@ export default function ProjectTaskCard({
           >
             {(() => {
               const isCurrentUserOwner =
-                currentUser?.id === owner.id;
+                currentUser?.id === (owner?.id ?? "");
 
               return (
                 <span

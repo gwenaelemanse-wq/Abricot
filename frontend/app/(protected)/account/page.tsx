@@ -106,17 +106,12 @@ export default function AccountPage() {
       }
 
       setUser(profileData.data.user);
-      // Sans ça, les initiales affichées ailleurs (header, cartes
-      // projet, avatars de commentaires...) resteraient périmées
-      // jusqu'à la prochaine connexion, puisqu'elles lisent toutes
-      // sessionStorage.getItem("user") plutôt que ce state local.
+      
       sessionStorage.setItem(
         "user",
         JSON.stringify(profileData.data.user)
       );
-      // Signale aux autres parties de l'app (le header notamment)
-      // que l'utilisateur stocké a changé, puisque sessionStorage
-      // lui-même n'est pas "réactif" en React.
+    
       window.dispatchEvent(new Event("user-updated"));
 
       // Modifier le mot de passe uniquement si un nouveau est renseigné

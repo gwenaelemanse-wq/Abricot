@@ -51,7 +51,10 @@ type Task = {
 
   dueDate: string | null;
   projectId: string;
-  comments?: Comment[];
+  comments?: {
+    id: string;
+    content: string;
+  }[];
   assignees?: Assignee[];
 };
 

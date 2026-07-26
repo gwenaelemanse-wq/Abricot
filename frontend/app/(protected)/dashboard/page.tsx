@@ -5,6 +5,15 @@ import TaskCard from "@/components/TaskCard";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import Link from "next/link";
 
+type Assignee = {
+  id: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+};
+
 type Task = {
   id: string;
   title: string;
@@ -22,6 +31,23 @@ type Task = {
   };
   comments?: {
     id: string;
+    content: string;
+  }[];
+};
+
+  type ProjectDetails = {
+  owner: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  members: {
+    id: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
   }[];
 };
 
@@ -110,12 +136,69 @@ export default function DashboardPage() {
     fetchAssignedTasks();
   }, []);
 
+
+
+const [projectsDetails, setProjectsDetails] = useState<Record<string, ProjectDetails>>({});
+
+useEffect(() => {
+  const fetchProjectsDetails = async () => {
+    if (tasks.length === 0) return;
+
+    const token = sessionStorage.getItem("token");
+    const uniqueProjectIds = Array.from(
+      new Set(tasks.map((task) => task.projectId))
+    );
+
+    try {
+      const results = await Promise.all(
+        uniqueProjectIds.map((id) =>
+          fetch(`http://localhost:8000/projects/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => res.json())
+        )
+      );
+
+      const map: Record<string, ProjectDetails> = {};
+      uniqueProjectIds.forEach((id, index) => {
+        map[id] = {
+          owner: results[index].data.project.owner,
+          members: results[index].data.project.members,
+        };
+      });
+
+      setProjectsDetails(map);
+    } catch {
+      // Si ça échoue, owner/members resteront simplement indéfinis pour les TaskCard concernées
+    }
+  };
+
+  fetchProjectsDetails();
+}, [tasks]);
+
   const handleTaskDeleted = (taskId: string) => {
     setTasks((previousTasks) =>
       previousTasks.filter((task) => task.id !== taskId)
     );
   };
 
+
+const handleTaskUpdated = (updatedTask: {
+  id: string;
+  title: string;
+  description: string | null;
+  status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+  projectId: string;
+  dueDate: string | null;
+  comments?: { id: string; content: string }[];
+  assignees?: Assignee[];
+}) => {
+  setTasks((previousTasks) =>
+    previousTasks.map((t) =>
+      t.id === updatedTask.id ? { ...t, ...updatedTask } : t
+    )
+  );
+};
+  
   return (
     <main>
       <section className="flex flex-col items-start gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -195,11 +278,14 @@ export default function DashboardPage() {
            : (
             tasks.map((task) => (
               <TaskCard
+                owner={projectsDetails[task.projectId]?.owner}
+                members={projectsDetails[task.projectId]?.members}
                 key={task.id}
                 task={task}
                 variant="List"
                 canDelete={true}
                 onDeleted={handleTaskDeleted}
+                onUpdated={handleTaskUpdated}
               />
             ))
           )}
@@ -218,11 +304,14 @@ export default function DashboardPage() {
 
             {todoTasks.map((task) => (
               <TaskCard
+                owner={projectsDetails[task.projectId]?.owner}
+                members={projectsDetails[task.projectId]?.members}
                 key={task.id}
                 task={task}
                 variant="Kanban"
                 canDelete={true}
                 onDeleted={handleTaskDeleted}
+                onUpdated={handleTaskUpdated}
               />
             ))}
           </div>
@@ -237,11 +326,14 @@ export default function DashboardPage() {
 
             {inProgressTasks.map((task) => (
               <TaskCard
+                owner={projectsDetails[task.projectId]?.owner}
+                members={projectsDetails[task.projectId]?.members}
                 key={task.id}
                 task={task}
                 variant="Kanban"
                 canDelete={true}
                 onDeleted={handleTaskDeleted}
+                onUpdated={handleTaskUpdated}
               />
             ))}
           </div>
@@ -256,11 +348,14 @@ export default function DashboardPage() {
 
             {doneTasks.map((task) => (
               <TaskCard
+                owner={projectsDetails[task.projectId]?.owner}
+                members={projectsDetails[task.projectId]?.members}
                 key={task.id}
                 task={task}
                 variant="Kanban"
                 canDelete={true}
                 onDeleted={handleTaskDeleted}
+                onUpdated={handleTaskUpdated}
               />
             ))}
           </div>
@@ -275,7 +370,7 @@ export default function DashboardPage() {
         }}
       />
 
-      <Link href="/logout" className="mt-8 inline-block text-sm">
+      <Link href="/login" className="mt-8 inline-block text-sm">
         Se déconnecter
       </Link>
     </main>

@@ -52,16 +52,19 @@ type ProjectTaskCardProps = {
     status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED";
     projectId: string;
     dueDate: string | null;
-    comments?: Comment[];
+    comments?: {
+    id: string;
+    content: string;
+  }[];
     assignees?: Assignee[];
   };
-    owner: {
+    owner?: {
     id: string;
     name: string | null;
     email: string;
   };
 
-  members: {
+  members?: {
     id: string;
     user: {
       id: string;
@@ -72,7 +75,7 @@ type ProjectTaskCardProps = {
   variant?: "List" | "Kanban";
   canDelete: boolean;
   onDeleted: (taskId: string) => void;
-  onUpdated: (updatedTask: ProjectTaskCardProps["task"]) => void;
+  onUpdated?: (updatedTask: ProjectTaskCardProps["task"]) => void;
 };
 
 export default function ProjectTaskCard({
@@ -295,7 +298,7 @@ export default function ProjectTaskCard({
       return;
     }
 
-    onUpdated(data.data.task);
+    onUpdated?.(data.data.task);
     setIsEditModalOpen(false);
   } catch {
     setEditError("Erreur réseau lors de la modification de la tâche.");
@@ -437,7 +440,7 @@ export default function ProjectTaskCard({
           <div className="space-y-3">
             {comments.map((comment) => {
               const isCommentFromOwner =
-                comment.author?.id === owner.id;
+                comment.author?.id === owner?.id;
 
               return (
                 <div key={comment.id} className="flex items-start gap-3">
@@ -493,7 +496,7 @@ export default function ProjectTaskCard({
           >
             {(() => {
               const isCurrentUserOwner =
-                currentUser?.id === owner.id;
+                currentUser?.id === (owner?.id ?? "");
 
               return (
                 <span
@@ -669,7 +672,7 @@ export default function ProjectTaskCard({
                     aria-multiselectable="true"
                     className="absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg"
                   >
-                    {members.map((member) => {
+                    {members?.map((member) => {
                       const person = member.user;
                       const isSelected = editAssigneeIds.includes(
                         person.id

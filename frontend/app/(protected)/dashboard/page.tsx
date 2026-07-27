@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import TaskCard from "@/components/TaskCard";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Assignee = {
   id: string;
@@ -86,6 +87,8 @@ export default function DashboardPage() {
   );
 
   const doneTasks = kanbanTasks.filter((task) => task.status === "DONE");
+
+  const router = useRouter();
 
   useEffect(() => {
     // L'utilisateur a été stocké dans sessionStorage au moment du
@@ -370,9 +373,16 @@ const handleTaskUpdated = (updatedTask: {
         }}
       />
 
-      <Link href="/login" className="mt-8 inline-block text-sm">
+      <button
+        type="button"
+        onClick={() => {
+          sessionStorage.removeItem("token");
+          router.push("/login");
+        }}
+        className="mt-8 inline-block text-sm"
+      >
         Se déconnecter
-      </Link>
-    </main>
+      </button>
+          </main>
   );
 }

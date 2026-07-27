@@ -2,19 +2,23 @@
 
 import { useEffect, useRef } from "react";
 
-// Gère les deux comportements clavier attendus d'une modale accessible :
-// - Echap ferme la modale.
-// - Tab reste "piégé" à l'intérieur de la modale (ne sort jamais sur
-//   la page derrière), et revient au premier champ après le dernier.
-// À la fermeture, le focus revient à l'élément qui avait ouvert
-// la modale (ex: le bouton "+ Créer un projet").
 export function useModalAccessibility(
   isOpen: boolean,
   onClose: () => void
 ) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
 
+  // On garde toujours la dernière version de onClose sans que ça
+  // déclenche l'effet ci-dessous.
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Focus initial + mémorisation de l'élément d'origine :
+  // ne se déclenche QUE quand la modale s'ouvre/se ferme,
+  // jamais à cause d'un re-render pendant la saisie.
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -36,12 +40,11 @@ export function useModalAccessibility(
       );
     };
 
-    // Donne le focus au premier élément de la modale à l'ouverture.
     getFocusableElements()[0]?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -72,7 +75,7 @@ export function useModalAccessibility(
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocusedElement.current?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]); // ✅ onClose retiré des dépendances
 
   return modalRef;
 }

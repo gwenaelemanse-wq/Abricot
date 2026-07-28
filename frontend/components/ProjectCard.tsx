@@ -16,6 +16,12 @@ type Project = {
   description: string | null;
   createdAt: string;
   ownerId: string;
+  owner?: {             
+    id: string;
+    name: string | null;
+    email: string;
+  };
+
   members: Member[];
   _count?: {
     tasks: number;
@@ -57,17 +63,17 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       ? 0
       : Math.round((completedTasks / totalTasks) * 100);
 
-  // Le propriétaire est le membre dont l'id correspond à
-  // project.ownerId (pas de champ project.owner séparé).
-  const ownerMember = members.find(
-    (member) => member.user.id === project.ownerId
-  );
 
-  // Les autres membres à afficher (sans le propriétaire, déjà
-  // affiché séparément avec son badge "Propriétaire").
-  const otherMembers = members.filter(
-    (member) => member.user.id !== project.ownerId
-  );
+// Le propriétaire vient de project.owner (renvoyé par le backend).
+// Fallback sur project.members pour les anciens projets si jamais
+// owner n'était pas présent dans la réponse.
+const owner =
+  project.owner ??
+  members.find((member) => member.user.id === project.ownerId)?.user;
+
+const otherMembers = members.filter(
+  (member) => member.user.id !== project.ownerId
+);
 
   return (
     <Link href={`/projects/${project.id}`}>
@@ -107,10 +113,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          {ownerMember && (
+          {owner && (
             <>
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-xs text-orange-700">
-                {getInitials(ownerMember.user)}
+                {getInitials(owner)}
               </span>
 
               <span className="rounded-full bg-orange-100 px-3 py-1 text-xs text-orange-700">

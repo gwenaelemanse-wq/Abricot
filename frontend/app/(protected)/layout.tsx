@@ -7,7 +7,9 @@ import Link from "next/link";
 import { LayoutDashboard, Folder } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-export function getInitials(person: { name: string | null; email: string }): string {
+//Mise a jour des initiales de l'utilisateur connecté, pour le layout, après une modification du profil. On émet un signal "user-updated" depuis /account.
+
+function getInitials(person: { name: string | null; email: string }): string {
   if (person.name && person.name.trim().length > 0) {
     return person.name
       .trim()
@@ -18,6 +20,8 @@ export function getInitials(person: { name: string | null; email: string }): str
   }
   return person.email.slice(0, 2).toUpperCase();
 }
+
+// Layout pour les pages protégées, qui vérifie la présence d'un token dans sessionStorage et redirige vers /login si nécessaire. On ne peut pas faire ça côté serveur, car on ne peut pas accéder à sessionStorage côté serveur.
 
 export default function ProtectedLayout({
   children,

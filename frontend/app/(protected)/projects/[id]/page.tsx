@@ -5,7 +5,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ProjectTaskCard from "@/components/ProjectTaskCard";
@@ -66,6 +66,11 @@ type Project = {
   members: ProjectMember[];
   createdAt: string;
   ownerId: string;
+  owner?: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
 };
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
@@ -103,6 +108,7 @@ function getInitials(user: {
 
 export default function ProjectDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.id as string;
 
   const [project, setProject] = useState<Project | null>(null);
@@ -303,6 +309,40 @@ export default function ProjectDetailsPage() {
     return <p>Chargement du projet...</p>;
   }
 
+  const handleDeleteProject = async () => {
+  const confirmed = window.confirm(
+    "Voulez-vous vraiment supprimer ce projet ? Cette action est irréversible."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const token = sessionStorage.getItem("token");
+
+    const response = await fetch(
+      `http://localhost:8000/projects/${projectId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json();
+      console.error(data.message || "Erreur lors de la suppression du projet.");
+      return;
+    }
+
+    router.push("/projects");
+  } catch (error) {
+    console.error("Erreur réseau lors de la suppression du projet :", error);
+  }
+};
+
   // Seul le créateur (owner) du projet peut le modifier.
   const canManageProject = currentUserId === project.ownerId;
 
@@ -312,6 +352,25 @@ export default function ProjectDetailsPage() {
   const ownerMember = project.members.find(
     (member) => member.user.id === project.ownerId
   );
+
+ 
+// Si le owner n'a pas d'entrée dans project.members (cas des anciens
+// projets en base, créés avant l'ajout automatique du owner comme
+// membre), on l'ajoute manuellement pour l'affichage uniquement.
+const displayedMembers = project.members.some(
+  (member) => member.user.id === project.ownerId
+)
+  ? project.members
+  : project.owner
+  ? [
+      {
+        id: `owner-${project.ownerId}`,
+        role: "OWNER" as const,
+        user: project.owner,
+      },
+      ...project.members,
+    ]
+  : project.members;
 
   // Le owner + les admins + les contributeurs peuvent gérer les tâches.
   const currentUserMember = project.members.find(
@@ -379,6 +438,16 @@ export default function ProjectDetailsPage() {
                   Modifier
                 </button>
               )}
+
+              {canManageProject && (
+                <button
+                  type="button"
+                  onClick={handleDeleteProject}
+                  className="text-left underline px-5 py-3 text-sm text-red-500"
+                >
+                  Supprimer
+                </button>
+              )}
           </div>
 
           <p className="mt-2 text-sm text-gray-500">
@@ -411,7 +480,7 @@ export default function ProjectDetailsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {project.members.map((member) => {
+          {displayedMembers.map((member) => {
             const isOwner = member.user.id === project.ownerId;
 
             return (
@@ -534,13 +603,11 @@ export default function ProjectDetailsPage() {
               <ProjectTaskCard
                 key={task.id}
                 task={task}
-                owner={
-                  ownerMember?.user ?? {
-                    id: project.ownerId,
-                    name: null,
-                    email: "",
-                  }
-                }
+                owner={project.owner ?? ownerMember?.user ?? {
+                  id: project.ownerId,
+                  name: null,
+                  email: "",
+                }}
                 members={project.members}
                 variant="List"
                 canDelete={canManageTasks}
